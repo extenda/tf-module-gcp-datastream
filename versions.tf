@@ -12,3 +12,8 @@ terraform {
     }
   }
 }
+
+# Configure the Google Cloud Provider with the project_id from variables
+provider "google" {
+  project = var.project_id
+}

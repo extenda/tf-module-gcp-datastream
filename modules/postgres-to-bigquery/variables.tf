@@ -108,3 +108,26 @@ variable "postgres_replication_slot" {
   type        = string
   default     = null
 }
+
+variable "max_concurrent_backfill_tasks" {
+  description = "Maximum number of concurrent backfill tasks for PostgreSQL source"
+  type        = number
+  default     = 50
+}
+
+variable "create_without_validation" {
+  description = "Create the stream without validation. Set to false for production streams."
+  type        = bool
+  default     = false
+}
+
+variable "desired_state" {
+  description = "Desired state of the Datastream stream. RUNNING to automatically start, NOT_STARTED to leave stopped."
+  type        = string
+  default     = "RUNNING"
+  
+  validation {
+    condition     = contains(["RUNNING", "NOT_STARTED"], var.desired_state)
+    error_message = "Desired state must be either 'RUNNING' or 'NOT_STARTED'."
+  }
+}

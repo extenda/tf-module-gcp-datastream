@@ -33,4 +33,9 @@ module "postgres_to_bigquery" {
   stream_id                      = var.stream_id
   postgres_publication           = var.postgres_publication
   postgres_replication_slot      = var.postgres_replication_slot
+  
+  # Performance tuning
+  max_concurrent_backfill_tasks  = var.max_concurrent_backfill_tasks
+  create_without_validation      = var.create_without_validation
+  desired_state                  = var.desired_state
 }

@@ -40,13 +40,18 @@ resource "google_bigquery_dataset" "destination_dataset" {
   # Optional: Set table expiration
   default_table_expiration_ms = null
 
-  # Optional: Enable deletion protection in production
-  delete_contents_on_destroy = true
+  # Keep deletion protection enabled (match existing dataset)
+  delete_contents_on_destroy = false
 }
 
 # Get the BigQuery service account for KMS permissions
 data "google_bigquery_default_service_account" "bq_service_account" {
   project = var.project_id
+}
+
+# Get project information to access project number
+data "google_project" "current" {
+  project_id = var.project_id
 }
 
 # Source connection profile for PostgreSQL
@@ -81,17 +86,26 @@ resource "google_datastream_connection_profile" "bigquery_destination" {
 resource "google_datastream_stream" "postgres_to_bigquery" {
   stream_id    = local.stream_id
   location     = var.region
-  display_name = "${local.stream_id} PostgreSQL to BigQuery Stream"
-
+  display_name = local.stream_id
+  
+  # Stream validation setting - configurable for different environments
+  create_without_validation = var.create_without_validation
+  
+  # Desired state - automatically start the stream
+  desired_state = var.desired_state
+  
   labels = var.labels
 
   source_config {
-    source_connection_profile = google_datastream_connection_profile.postgres_source.id
+    source_connection_profile = "projects/${data.google_project.current.number}/locations/${var.region}/connectionProfiles/${local.postgres_profile_id}"
     
     postgresql_source_config {
       # Required replication slot and publication names
       replication_slot = local.postgres_replication_slot
       publication      = local.postgres_publication
+      
+      # Maximum concurrent backfill tasks (configurable)
+      max_concurrent_backfill_tasks = var.max_concurrent_backfill_tasks
       
       # Configure table replication based on user input
       dynamic "include_objects" {
@@ -109,28 +123,21 @@ resource "google_datastream_stream" "postgres_to_bigquery" {
         }
       }
       
-      # Exclude system tables
-      exclude_objects {
-        postgresql_schemas {
-          schema = "information_schema"
-        }
-        postgresql_schemas {
-          schema = "pg_catalog"
-        }
-      }
+      # Match existing stream - no exclude_objects (existing has excludeObjects: {})
     }
   }
 
   destination_config {
-    destination_connection_profile = google_datastream_connection_profile.bigquery_destination.id
+    destination_connection_profile = "projects/${data.google_project.current.number}/locations/${var.region}/connectionProfiles/${local.bigquery_profile_id}"
     
     bigquery_destination_config {
-      # Use source hierarchy - creates datasets based on source schema structure
-      source_hierarchy_datasets {
-        dataset_template {
-          location = var.bigquery_location
-        }
+      # Use single target dataset to match existing configuration
+      single_target_dataset {
+        dataset_id = "${var.project_id}:${var.dataset_id}"
       }
+      
+      # Add merge block to match existing stream
+      merge {}
       
       # Data freshness - how often to commit data to BigQuery
       data_freshness = var.data_freshness == "15m" ? "900s" : var.data_freshness == "5m" ? "300s" : var.data_freshness == "1h" ? "3600s" : var.data_freshness

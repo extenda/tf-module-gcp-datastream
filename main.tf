@@ -14,6 +14,7 @@ module "postgres_to_bigquery" {
   region           = var.region
   postgres_host    = var.postgres_host
   postgres_instance = var.postgres_instance
+  postgres_instance_type = var.postgres_instance_type
   postgres_database = var.postgres_database
   postgres_username = var.postgres_username
   dataset_id       = var.dataset_id

@@ -18,6 +18,17 @@ variable "postgres_instance" {
   type        = string
 }
 
+variable "postgres_instance_type" {
+  description = "Type of PostgreSQL instance: 'cloudsql' or 'alloydb'"
+  type        = string
+  default     = "cloudsql"
+  
+  validation {
+    condition     = contains(["cloudsql", "alloydb"], var.postgres_instance_type)
+    error_message = "Instance type must be either 'cloudsql' or 'alloydb'."
+  }
+}
+
 variable "postgres_database" {
   description = "PostgreSQL database name"
   type        = string

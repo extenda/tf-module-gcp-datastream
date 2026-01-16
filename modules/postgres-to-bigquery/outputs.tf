@@ -25,7 +25,7 @@ output "bigquery_connection_profile_id" {
 
 output "datastream_user_name" {
   description = "The PostgreSQL user created for Datastream"
-  value       = google_sql_user.datastream_user.name
+  value       = var.postgres_instance_type == "cloudsql" ? google_sql_user.datastream_user_cloudsql[0].name : google_alloydb_user.datastream_user_alloydb[0].user_id
 }
 
 output "datastream_user_password" {

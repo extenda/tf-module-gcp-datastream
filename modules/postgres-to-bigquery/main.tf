@@ -22,11 +22,21 @@ resource "random_password" "datastream_user_password" {
   special = true
 }
 
-# Create a dedicated user for Datastream
-resource "google_sql_user" "datastream_user" {
+# Create a dedicated user for Datastream - Cloud SQL
+resource "google_sql_user" "datastream_user_cloudsql" {
+  count    = var.postgres_instance_type == "cloudsql" ? 1 : 0
   name     = var.postgres_username
   instance = var.postgres_instance
   password = random_password.datastream_user_password.result
+}
+
+# Create a dedicated user for Datastream - AlloyDB
+resource "google_alloydb_user" "datastream_user_alloydb" {
+  count       = var.postgres_instance_type == "alloydb" ? 1 : 0
+  user_id     = var.postgres_username
+  cluster     = var.postgres_instance
+  user_type   = "ALLOYDB_BUILT_IN"
+  password    = random_password.datastream_user_password.result
 }
 
 # Create BigQuery dataset for the replicated data
@@ -63,8 +73,8 @@ resource "google_datastream_connection_profile" "postgres_source" {
   postgresql_profile {
     hostname = var.postgres_host
     port     = 5432
-    username = google_sql_user.datastream_user.name
-    password = google_sql_user.datastream_user.password
+    username = var.postgres_username
+    password = random_password.datastream_user_password.result
     database = var.postgres_database
   }
 
@@ -156,7 +166,8 @@ resource "google_datastream_stream" "postgres_to_bigquery" {
   }
 
   depends_on = [
-    google_sql_user.datastream_user,
+    google_sql_user.datastream_user_cloudsql,
+    google_alloydb_user.datastream_user_alloydb,
     google_bigquery_dataset.destination_dataset
   ]
 }

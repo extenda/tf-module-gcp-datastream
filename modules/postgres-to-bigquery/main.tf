@@ -37,8 +37,6 @@ resource "google_alloydb_user" "datastream_user_alloydb" {
   cluster     = var.postgres_instance
   user_type   = "ALLOYDB_BUILT_IN"
   password    = random_password.datastream_user_password.result
-  
-  database_roles = ["alloydbsuperuser"]
 }
 
 # Create BigQuery dataset for the replicated data

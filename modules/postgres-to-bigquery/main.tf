@@ -50,8 +50,8 @@ resource "google_bigquery_dataset" "destination_dataset" {
   # Optional: Set table expiration
   default_table_expiration_ms = null
 
-  # Keep deletion protection enabled (match existing dataset)
-  delete_contents_on_destroy = false
+  # Dataset deletion behavior - configurable for different environments
+  delete_contents_on_destroy = var.delete_contents_on_destroy
 }
 
 # Get the BigQuery service account for KMS permissions

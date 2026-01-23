@@ -157,3 +157,9 @@ variable "desired_state" {
     error_message = "Desired state must be either 'RUNNING' or 'NOT_STARTED'."
   }
 }
+
+variable "delete_contents_on_destroy" {
+  description = "Whether to delete BigQuery dataset contents when destroying the dataset. Use with caution."
+  type        = bool
+  default     = false
+}

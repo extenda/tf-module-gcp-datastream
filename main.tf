@@ -39,4 +39,5 @@ module "postgres_to_bigquery" {
   max_concurrent_backfill_tasks  = var.max_concurrent_backfill_tasks
   create_without_validation      = var.create_without_validation
   desired_state                  = var.desired_state
+  delete_contents_on_destroy     = var.delete_contents_on_destroy
 }
